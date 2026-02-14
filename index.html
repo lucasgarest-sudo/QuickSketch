@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickSketch - Art Reference Interval Game</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  text-align: center;
+  width: 90%;
+  max-width: 700px;
+}
+
+h1 { margin-bottom: 20px; }
+
+select, button {
+  padding: 10px;
+  margin: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: none;
+}
+
+button {
+  background: #4cafef;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+button:hover { opacity: 0.85; }
+
+button:disabled {
+  background: gray;
+  cursor: not-allowed;
+}
+
+#gameScreen { display: none; }
+
+img {
+  max-width: 100%;
+  max-height: 65vh;
+  border-radius: 10px;
+  transition: opacity 0.3s ease;
+}
+
+.timer {
+  margin-top: 10px;
+  font-size: 18px;
+}
+
+.subjects {
+  margin-top: 15px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  text-align: left;
+}
+
+.subjects label { margin: 0; }
+
+.controls {
+  margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <!-- SETTINGS -->
+  <div id="settingsScreen">
+    <h1>QuickSketch</h1>
+
+    <div>
+      <label>Time Per Image:</label><br>
+      <select id="timeSelect">
+        <option value="">Select Time</option>
+        <option value="30">30 Seconds</option>
+        <option value="45">45 Seconds</option>
+        <option value="60">1 Minute</option>
+        <option value="180">3 Minutes</option>
+        <option value="300">5 Minutes</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Number of Images:</label><br>
+      <select id="quantitySelect">
+        <option value="">Select Quantity</option>
+        <option value="6">6 Images</option>
+        <option value="10">10 Images</option>
+        <option value="20">20 Images</option>
+      </select>
+    </div>
+
+    <div class="subjects">
+      <label><input type="checkbox" value="people"> People</label>
+      <label><input type="checkbox" value="animals"> Animals</label>
+      <label><input type="checkbox" value="objects"> Objects</label>
+      <label><input type="checkbox" value="environment"> Environments</label>
+      <label><input type="checkbox" value="dinosaurs"> Dinosaurs</label>
+      <label><input type="checkbox" value="robots"> Robots</label>
+      <label><input type="checkbox" value="food"> Food</label>
+      <label><input type="checkbox" value="toys"> Toys</label>
+      <label><input type="checkbox" value="hands"> Hands</label>
+      <label><input type="checkbox" value="architecture"> Architecture</label>
+      <label><input type="checkbox" value="sports"> Sports</label>
+    </div>
+
+    <button id="startBtn" disabled>Start</button>
+  </div>
+
+  <!-- GAME -->
+  <div id="gameScreen">
+    <img id="gameImage" src="">
+    <div class="timer" id="countdown"></div>
+
+    <div class="controls">
+      <button id="pauseBtn">Pause</button>
+      <button id="resetBtn" style="display:none;">Reset</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const ACCESS_KEY = "6TQLQSHIP_IgV9lT0pxf9iTlhiLCYxglrGnLB9DXBLE";
+
+const timeSelect = document.getElementById("timeSelect");
+const quantitySelect = document.getElementById("quantitySelect");
+const startBtn = document.getElementById("startBtn");
+const settingsScreen = document.getElementById("settingsScreen");
+const gameScreen = document.getElementById("gameScreen");
+const gameImage = document.getElementById("gameImage");
+const countdown = document.getElementById("countdown");
+const pauseBtn = document.getElementById("pauseBtn");
+const resetBtn = document.getElementById("resetBtn");
+const subjectCheckboxes = document.querySelectorAll(".subjects input");
+
+let selectedTime;
+let selectedQuantity;
+let selectedSubjects = [];
+let currentImage = 0;
+let timerInterval;
+let timeLeft = 0;
+let isPaused = false;
+
+function checkSelections() {
+  selectedSubjects = Array.from(subjectCheckboxes)
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+
+  startBtn.disabled = !(timeSelect.value && quantitySelect.value && selectedSubjects.length > 0);
+}
+
+timeSelect.addEventListener("change", () => {
+  selectedTime = parseInt(timeSelect.value);
+  checkSelections();
+});
+
+quantitySelect.addEventListener("change", () => {
+  selectedQuantity = parseInt(quantitySelect.value);
+  checkSelections();
+});
+
+subjectCheckboxes.forEach(cb => cb.addEventListener("change", checkSelections));
+startBtn.addEventListener("click", startGame);
+
+pauseBtn.addEventListener("click", () => {
+  if (!isPaused) {
+    clearInterval(timerInterval);
+    isPaused = true;
+    pauseBtn.textContent = "Resume";
+    resetBtn.style.display = "inline-block";
+  } else {
+    isPaused = false;
+    pauseBtn.textContent = "Pause";
+    resetBtn.style.display = "none";
+    startTimer();
+  }
+});
+
+resetBtn.addEventListener("click", resetGame);
+
+function resetGame() {
+  clearInterval(timerInterval);
+  currentImage = 0;
+  timeLeft = 0;
+  isPaused = false;
+
+  gameScreen.style.display = "none";
+  settingsScreen.style.display = "block";
+
+  pauseBtn.textContent = "Pause";
+  resetBtn.style.display = "none";
+  countdown.textContent = "";
+  gameImage.src = "";
+}
+
+function startGame() {
+  currentImage = 0;
+  settingsScreen.style.display = "none";
+  gameScreen.style.display = "block";
+  showNextImage();
+}
+
+async function fetchImageURL(subject) {
+  const queries = {
+    people: "portrait person pose art reference",
+    animals: "single animal portrait art reference",
+    objects: "object isolated still life art reference",
+    environment: "environment landscape interior art reference",
+    dinosaurs: "dinosaur realistic art reference",
+    robots: "robot character design art reference",
+    food: "food still life photography",
+    toys: "toy product photography isolated",
+    hands: "hand pose reference photography",
+    architecture: "architecture building exterior photography",
+    sports: "sports action pose photography"
+  };
+
+  const query = encodeURIComponent(queries[subject]);
+  const url = `https://api.unsplash.com/photos/random?query=${query}&orientation=landscape&client_id=${ACCESS_KEY}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.urls.regular;
+  } catch (err) {
+    console.error("Error fetching image:", err);
+    return null;
+  }
+}
+
+async function showNextImage() {
+  if (currentImage >= selectedQuantity) {
+    endGame();
+    return;
+  }
+
+  gameImage.style.opacity = 0;
+
+  const randomSubject = selectedSubjects[Math.floor(Math.random() * selectedSubjects.length)];
+  const imageUrl = await fetchImageURL(randomSubject);
+
+  if (!imageUrl) {
+    alert("Failed to load image.");
+    endGame();
+    return;
+  }
+
+  gameImage.src = imageUrl;
+
+  setTimeout(() => {
+    gameImage.style.opacity = 1;
+  }, 100);
+
+  timeLeft = selectedTime;
+  startTimer();
+}
+
+function startTimer() {
+  countdown.textContent = `Time Remaining: ${timeLeft}s`;
+
+  timerInterval = setInterval(() => {
+    if (!isPaused) {
+      timeLeft--;
+      countdown.textContent = `Time Remaining: ${timeLeft}s`;
+
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        currentImage++;
+        showNextImage();
+      }
+    }
+  }, 1000);
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  alert("Session Complete!");
+  resetGame();
+}
+</script>
+
+</body>
+</html>
