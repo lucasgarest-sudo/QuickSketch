@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QuickSketch - Art Reference Interval Game</title>
+<title>QuickSketch</title>
 
 <style>
 body {
@@ -19,15 +19,15 @@ body {
 
 .container {
   text-align: center;
-  width: 90%;
-  max-width: 700px;
+  width: 95%;
+  max-width: 750px;
 }
 
 h1 { margin-bottom: 20px; }
 
 select, button {
   padding: 10px;
-  margin: 10px;
+  margin: 8px;
   font-size: 16px;
   border-radius: 6px;
   border: none;
@@ -37,10 +37,7 @@ button {
   background: #4cafef;
   color: white;
   cursor: pointer;
-  transition: 0.2s ease;
 }
-
-button:hover { opacity: 0.85; }
 
 button:disabled {
   background: gray;
@@ -54,12 +51,12 @@ img {
   max-height: 65vh;
   border-radius: 10px;
   transition: opacity 0.3s ease;
+  filter: grayscale(100%);
 }
 
-.timer {
-  margin-top: 10px;
-  font-size: 18px;
-}
+.timer { margin-top: 10px; font-size: 18px; }
+.progress { margin-top: 5px; font-size: 14px; opacity: 0.8; }
+.gameLength { margin-top: 10px; font-weight: bold; color: #4cafef; }
 
 .subjects {
   margin-top: 15px;
@@ -69,75 +66,73 @@ img {
   text-align: left;
 }
 
-.subjects label { margin: 0; }
-
-.controls {
-  margin-top: 15px;
-}
+.controls { margin-top: 15px; }
 </style>
 </head>
 
 <body>
 <div class="container">
 
-  <!-- SETTINGS -->
-  <div id="settingsScreen">
-    <h1>QuickSketch</h1>
+<!-- SETTINGS -->
+<div id="settingsScreen">
+  <h1>QuickSketch</h1>
 
-    <div>
-      <label>Time Per Image:</label><br>
-      <select id="timeSelect">
-        <option value="">Select Time</option>
-        <option value="30">30 Seconds</option>
-        <option value="45">45 Seconds</option>
-        <option value="60">1 Minute</option>
-        <option value="180">3 Minutes</option>
-        <option value="300">5 Minutes</option>
-      </select>
-    </div>
-
-    <div>
-      <label>Number of Images:</label><br>
-      <select id="quantitySelect">
-        <option value="">Select Quantity</option>
-        <option value="6">6 Images</option>
-        <option value="10">10 Images</option>
-        <option value="20">20 Images</option>
-      </select>
-    </div>
-
-    <div class="subjects">
-      <label><input type="checkbox" value="people"> People</label>
-      <label><input type="checkbox" value="animals"> Animals</label>
-      <label><input type="checkbox" value="objects"> Objects</label>
-      <label><input type="checkbox" value="environment"> Environments</label>
-      <label><input type="checkbox" value="dinosaurs"> Dinosaurs</label>
-      <label><input type="checkbox" value="robots"> Robots</label>
-      <label><input type="checkbox" value="food"> Food</label>
-      <label><input type="checkbox" value="toys"> Toys</label>
-      <label><input type="checkbox" value="hands"> Hands</label>
-      <label><input type="checkbox" value="architecture"> Architecture</label>
-      <label><input type="checkbox" value="sports"> Sports</label>
-    </div>
-
-    <button id="startBtn" disabled>Start</button>
+  <div>
+    <label>Time Per Image:</label><br>
+    <select id="timeSelect">
+      <option value="">Select Time</option>
+      <option value="15">15 Seconds</option>
+      <option value="30">30 Seconds</option>
+      <option value="60">1 Minute</option>
+      <option value="120">2 Minutes</option>
+    </select>
   </div>
 
-  <!-- GAME -->
-  <div id="gameScreen">
-    <img id="gameImage" src="">
-    <div class="timer" id="countdown"></div>
-
-    <div class="controls">
-      <button id="pauseBtn">Pause</button>
-      <button id="resetBtn" style="display:none;">Reset</button>
-    </div>
+  <div>
+    <label>Number of Rounds:</label><br>
+    <select id="quantitySelect">
+      <option value="">Select Rounds</option>
+      <option value="3">3 Rounds</option>
+      <option value="6">6 Rounds</option>
+      <option value="10">10 Rounds</option>
+      <option value="15">15 Rounds</option>
+    </select>
   </div>
+
+  <div class="gameLength" id="gameLength"></div>
+
+  <div class="subjects">
+    <label><input type="checkbox" value="people"> People</label>
+    <label><input type="checkbox" value="animals"> Animals</label>
+    <label><input type="checkbox" value="objects"> Objects</label>
+    <label><input type="checkbox" value="dinosaurs"> Dinosaurs</label>
+    <label><input type="checkbox" value="robots"> Robots</label>
+    <label><input type="checkbox" value="food"> Food</label>
+    <label><input type="checkbox" value="toys"> Toys</label>
+    <label><input type="checkbox" value="hands"> Hands</label>
+    <label><input type="checkbox" value="architecture"> Architecture</label>
+    <label><input type="checkbox" value="sports"> Sports</label>
+  </div>
+
+  <button id="startBtn" disabled>Start</button>
+</div>
+
+<!-- GAME -->
+<div id="gameScreen">
+  <img id="gameImage" src="">
+  <div class="timer" id="countdown"></div>
+  <div class="progress" id="progress"></div>
+
+  <div class="controls">
+    <button id="pauseBtn">Pause</button>
+    <button id="resetBtn" style="display:none;">Reset</button>
+  </div>
+</div>
 
 </div>
 
 <script>
-const ACCESS_KEY = "6TQLQSHIP_IgV9lT0pxf9iTlhiLCYxglrGnLB9DXBLE";
+const ACCESS_KEY = "YOUR_UNSPLASH_KEY_HERE";
 
 const timeSelect = document.getElementById("timeSelect");
 const quantitySelect = document.getElementById("quantitySelect");
@@ -146,38 +141,138 @@ const settingsScreen = document.getElementById("settingsScreen");
 const gameScreen = document.getElementById("gameScreen");
 const gameImage = document.getElementById("gameImage");
 const countdown = document.getElementById("countdown");
+const progress = document.getElementById("progress");
 const pauseBtn = document.getElementById("pauseBtn");
 const resetBtn = document.getElementById("resetBtn");
+const gameLengthDisplay = document.getElementById("gameLength");
 const subjectCheckboxes = document.querySelectorAll(".subjects input");
 
-let selectedTime;
-let selectedQuantity;
+let selectedTime = 0;
+let selectedQuantity = 0;
 let selectedSubjects = [];
 let currentImage = 0;
-let timerInterval;
+let timerInterval = null;
 let timeLeft = 0;
 let isPaused = false;
+let preloadedImages = [];
+
+/* ---------------- GAME LENGTH CALCULATION ---------------- */
+
+function updateGameLength() {
+  if (timeSelect.value && quantitySelect.value) {
+    const totalSeconds = parseInt(timeSelect.value) * parseInt(quantitySelect.value);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    if (minutes > 0 && seconds > 0) {
+      gameLengthDisplay.textContent = `Game Length = ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+      gameLengthDisplay.textContent = `Game Length = ${minutes} minute(s)`;
+    } else {
+      gameLengthDisplay.textContent = `Game Length = ${seconds} seconds`;
+    }
+  } else {
+    gameLengthDisplay.textContent = "";
+  }
+}
+
+/* ---------------- SELECTION CHECK ---------------- */
 
 function checkSelections() {
   selectedSubjects = Array.from(subjectCheckboxes)
     .filter(cb => cb.checked)
     .map(cb => cb.value);
 
-  startBtn.disabled = !(timeSelect.value && quantitySelect.value && selectedSubjects.length > 0);
+  startBtn.disabled = !(timeSelect.value && quantitySelect.value && selectedSubjects.length);
+  updateGameLength();
 }
 
-timeSelect.addEventListener("change", () => {
-  selectedTime = parseInt(timeSelect.value);
-  checkSelections();
-});
-
-quantitySelect.addEventListener("change", () => {
-  selectedQuantity = parseInt(quantitySelect.value);
-  checkSelections();
-});
-
+timeSelect.addEventListener("change", checkSelections);
+quantitySelect.addEventListener("change", checkSelections);
 subjectCheckboxes.forEach(cb => cb.addEventListener("change", checkSelections));
-startBtn.addEventListener("click", startGame);
+
+/* ---------------- START GAME ---------------- */
+
+startBtn.addEventListener("click", async () => {
+  selectedTime = parseInt(timeSelect.value);
+  selectedQuantity = parseInt(quantitySelect.value);
+
+  await preloadImages();
+
+  currentImage = 0;
+  settingsScreen.style.display = "none";
+  gameScreen.style.display = "block";
+  showNextImage();
+});
+
+/* ---------------- IMAGE FETCHING (PRELOAD) ---------------- */
+
+async function preloadImages() {
+  preloadedImages = [];
+
+  const queries = {
+    people: "single person close up",
+    animals: "animal close up",
+    objects: "single object isolated",
+    dinosaurs: "dinosaur realistic illustration single subject",
+    robots: "robot single subject",
+    food: "single food item isolated",
+    toys: "single toy isolated",
+    hands: "hand pose close up",
+    architecture: "single building centered no people",
+    sports: "single athlete action pose isolated"
+  };
+
+  for (let i = 0; i < selectedQuantity; i++) {
+    const subject = selectedSubjects[Math.floor(Math.random() * selectedSubjects.length)];
+    const query = encodeURIComponent(queries[subject]);
+    const orientation = subject === "people" ? "portrait" : "landscape";
+
+    const url = `https://api.unsplash.com/photos/random?query=${query}&orientation=${orientation}&content_filter=high&client_id=${ACCESS_KEY}`;
+
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.urls) preloadedImages.push(data.urls.regular);
+    } catch {}
+  }
+}
+
+/* ---------------- IMAGE DISPLAY ---------------- */
+
+function showNextImage() {
+  if (currentImage >= preloadedImages.length) {
+    endGame();
+    return;
+  }
+
+  gameImage.src = preloadedImages[currentImage];
+  currentImage++;
+  progress.textContent = `Round ${currentImage} of ${selectedQuantity}`;
+
+  timeLeft = selectedTime;
+  startTimer();
+}
+
+/* ---------------- TIMER ---------------- */
+
+function startTimer() {
+  countdown.textContent = `Time Remaining: ${timeLeft}s`;
+
+  timerInterval = setInterval(() => {
+    if (!isPaused) {
+      timeLeft--;
+      countdown.textContent = `Time Remaining: ${timeLeft}s`;
+
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        showNextImage();
+      }
+    }
+  }, 1000);
+}
+
+/* ---------------- PAUSE / RESET ---------------- */
 
 pauseBtn.addEventListener("click", () => {
   if (!isPaused) {
@@ -197,97 +292,17 @@ resetBtn.addEventListener("click", resetGame);
 
 function resetGame() {
   clearInterval(timerInterval);
-  currentImage = 0;
-  timeLeft = 0;
   isPaused = false;
-
   gameScreen.style.display = "none";
   settingsScreen.style.display = "block";
-
   pauseBtn.textContent = "Pause";
   resetBtn.style.display = "none";
   countdown.textContent = "";
+  progress.textContent = "";
   gameImage.src = "";
 }
 
-function startGame() {
-  currentImage = 0;
-  settingsScreen.style.display = "none";
-  gameScreen.style.display = "block";
-  showNextImage();
-}
-
-async function fetchImageURL(subject) {
-  const queries = {
-    people: "portrait person pose art reference",
-    animals: "single animal portrait art reference",
-    objects: "object isolated still life art reference",
-    environment: "environment landscape interior art reference",
-    dinosaurs: "dinosaur realistic art reference",
-    robots: "robot character design art reference",
-    food: "food still life photography",
-    toys: "toy product photography isolated",
-    hands: "hand pose reference photography",
-    architecture: "architecture building exterior photography",
-    sports: "sports action pose photography"
-  };
-
-  const query = encodeURIComponent(queries[subject]);
-  const url = `https://api.unsplash.com/photos/random?query=${query}&orientation=landscape&client_id=${ACCESS_KEY}`;
-
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    return data.urls.regular;
-  } catch (err) {
-    console.error("Error fetching image:", err);
-    return null;
-  }
-}
-
-async function showNextImage() {
-  if (currentImage >= selectedQuantity) {
-    endGame();
-    return;
-  }
-
-  gameImage.style.opacity = 0;
-
-  const randomSubject = selectedSubjects[Math.floor(Math.random() * selectedSubjects.length)];
-  const imageUrl = await fetchImageURL(randomSubject);
-
-  if (!imageUrl) {
-    alert("Failed to load image.");
-    endGame();
-    return;
-  }
-
-  gameImage.src = imageUrl;
-
-  setTimeout(() => {
-    gameImage.style.opacity = 1;
-  }, 100);
-
-  timeLeft = selectedTime;
-  startTimer();
-}
-
-function startTimer() {
-  countdown.textContent = `Time Remaining: ${timeLeft}s`;
-
-  timerInterval = setInterval(() => {
-    if (!isPaused) {
-      timeLeft--;
-      countdown.textContent = `Time Remaining: ${timeLeft}s`;
-
-      if (timeLeft <= 0) {
-        clearInterval(timerInterval);
-        currentImage++;
-        showNextImage();
-      }
-    }
-  }, 1000);
-}
+/* ---------------- END GAME ---------------- */
 
 function endGame() {
   clearInterval(timerInterval);
